@@ -1,0 +1,156 @@
+from tkinter import *
+from tkinter import messagebox
+from datetime import datetime
+
+
+class ParkingFeeCalculator:
+    def _init_(self, root):
+        self.root = root
+        self.root.title("Two-Wheeler Parking Fee Calculator")
+        self.root.geometry("1680x1050")
+
+        self.vehicle_number = StringVar()
+        self.entry_date = StringVar()
+        self.entry_time = StringVar()
+        self.exit_date = StringVar()
+        self.exit_time = StringVar()
+        self.total_fee = DoubleVar()
+        self.current_date = StringVar()
+
+        self.entry_list = []  # List to store entry details for multiple bikes
+
+        title = Label(root, text="Two-Wheeler Parking Fee Calculator", bd=10, relief=GROOVE,
+                      font=("times new roman", 30, "bold"), bg="yellow", fg="blue")
+        title.pack(side=TOP, fill=X)
+
+        # Vehicle Number
+        lbl_vehicle_number = Label(root, text="Vehicle Number", font=("times new roman", 20, "bold"))
+        lbl_vehicle_number.place(x=50, y=100)
+        self.entry_vehicle_number = Entry(root, textvariable=self.vehicle_number, font=("times new roman", 15, "bold"), bd=5, relief=GROOVE)
+        self.entry_vehicle_number.place(x=250, y=100)
+
+        # Entry Date
+        lbl_entry_date = Label(root, text="Entry Date ", font=("times new roman", 20, "bold"))
+        lbl_entry_date.place(x=50, y=150)
+        self.entry_entry_date = Entry(root, textvariable=self.entry_date, font=("times new roman", 15, "bold"), bd=5, relief=GROOVE)
+        self.entry_entry_date.place(x=250, y=150)
+
+        # Entry Time
+        lbl_entry_time = Label(root, text="Entry Time ", font=("times new roman", 20, "bold"))
+        lbl_entry_time.place(x=50, y=200)
+        self.entry_entry_time = Entry(root, textvariable=self.entry_time, font=("times new roman", 15, "bold"), bd=5, relief=GROOVE)
+        self.entry_entry_time.place(x=250, y=200)
+
+        # Exit Date
+        lbl_exit_date = Label(root, text="Exit Date ", font=("times new roman", 20, "bold"))
+        lbl_exit_date.place(x=50, y=250)
+        self.entry_exit_date = Entry(root, textvariable=self.exit_date, font=("times new roman", 15, "bold"), bd=5, relief=GROOVE)
+        self.entry_exit_date.place(x=250, y=250)
+
+        # Exit Time
+        lbl_exit_time = Label(root, text="Exit Time ", font=("times new roman", 20, "bold"))
+        lbl_exit_time.place(x=50, y=300)
+        self.entry_exit_time = Entry(root, textvariable=self.exit_time, font=("times new roman", 15, "bold"), bd=5, relief=GROOVE)
+        self.entry_exit_time.place(x=250, y=300)
+
+        # Calculate Button
+        btn_calculate = Button(root, text="Calculate Fee", command=self.calculate_fee, font=("times new roman", 15, "bold"), bd=7, relief=GROOVE, bg="orange", fg="white")
+        btn_calculate.place(x=300, y=350)
+
+        # Total Fee
+        lbl_total_fee = Label(root, text="Total Fee", font=("times new roman", 20, "bold"))
+        lbl_total_fee.place(x=50, y=400)
+        self.lbl_total_fee_value = Label(root, textvariable=self.total_fee, font=("times new roman", 20, "bold"), bd=5, relief=GROOVE, bg="white", fg="black")
+        self.lbl_total_fee_value.place(x=250, y=400)
+
+        # Current Date
+        lbl_date = Label(root, textvariable=self.current_date, font=("times new roman", 15))
+        lbl_date.place(x=1300, y=20)
+        self.update_date()
+
+        # New Entry Button
+        btn_new_entry = Button(root, text="New Entry", command=self.new_entry, font=("times new roman", 15, "bold"), bd=7, relief=GROOVE, bg="green", fg="white")
+        btn_new_entry.place(x=200, y=450)
+
+        # History Button
+        btn_history = Button(root, text="Show History", command=self.show_history, font=("times new roman", 15, "bold"), bd=7, relief=GROOVE, bg="blue", fg="white")
+        btn_history.place(x=400, y=450)
+
+    def calculate_fee(self):
+        vehicle_number = self.vehicle_number.get()
+        entry_date_str = self.entry_date.get()
+        entry_time_str = self.entry_time.get()
+        exit_date_str = self.exit_date.get()
+        exit_time_str = self.exit_time.get()
+
+        if vehicle_number == "" or entry_date_str == "" or entry_time_str == "" or exit_date_str == "" or exit_time_str == "":
+            messagebox.showerror("Error", "Please enter valid details")
+            return
+
+        try:
+            entry_datetime = datetime.strptime(entry_date_str + ' ' + entry_time_str, "%Y-%m-%d %H:%M")
+            exit_datetime = datetime.strptime(exit_date_str + ' ' + exit_time_str, "%Y-%m-%d %H:%M")
+        except ValueError:
+            messagebox.showerror("Error", "Please enter valid date and time in YYYY-MM-DD HH:MM format")
+            return
+
+        if entry_datetime >= exit_datetime:
+            messagebox.showerror("Error", "Exit datetime should be after entry datetime")
+            return
+
+        duration_days = (exit_datetime - entry_datetime).days
+        duration_hours = (exit_datetime - entry_datetime).seconds / 3600
+        total_duration = duration_days * 24 + duration_hours
+        fee_per_hour = 10
+        fee = total_duration * fee_per_hour
+        self.total_fee.set(fee)
+
+        # Store entry details
+        self.entry_list.append({
+            "vehicle_number": vehicle_number,
+            "entry_date": entry_date_str,
+            "entry_time": entry_time_str,
+            "exit_date": exit_date_str,
+            "exit_time": exit_time_str,
+            "fee": fee
+        })
+
+    def new_entry(self):
+        self.reset()
+        self.total_fee.set(0.0)
+
+    def show_history(self):
+        if self.entry_list:
+            history_window = Toplevel(self.root)
+            history_window.title("Parking History")
+            history_window.geometry("800x600")
+            history_text = Text(history_window, height=30, width=100)
+            history_text.pack()
+            for entry in self.entry_list:
+                history_text.insert(END, f"Vehicle Number: {entry['vehicle_number']}\n"
+                                          f"Entry Date: {entry['entry_date']}\n"
+                                          f"Entry Time: {entry['entry_time']}\n"
+                                          f"Exit Date: {entry['exit_date']}\n"
+                                          f"Exit Time: {entry['exit_time']}\n"
+                                          f"Fee: {entry['fee']}\n\n")
+            history_text.config(state=DISABLED)
+        else:
+            messagebox.showinfo("Parking History", "No parking history available.")
+
+    def reset(self):
+        self.vehicle_number.set("")
+        self.entry_date.set("")
+        self.entry_time.set("")
+        self.exit_date.set("")
+        self.exit_time.set("")
+        self.total_fee.set("")
+
+    def update_date(self):
+        now = datetime.now()
+        self.current_date.set(now.strftime("%Y-%m-%d %H:%M:%S"))
+        self.root.after(1000, self.update_date)
+
+
+root = Tk()
+obj = ParkingFeeCalculator(root)
+root.mainloop()
